@@ -10,7 +10,10 @@ import {
 } from '@nestjs/websockets';
 import { Socket, Server } from 'socket.io';
 
-import { ClientEvents, ServerEvents } from 'src/common/constants/events';
+import {
+  ChatClientEvents,
+  ChatServerEvents,
+} from 'src/common/constants/events';
 import { ChatEntity } from 'src/core/entities/chat.entity';
 import { AddMessageDto } from 'src/modules/chat/dto/add-message.dto';
 import { CreateChatDto } from 'src/modules/chat/dto/create-chat.dto';
@@ -35,7 +38,7 @@ export class ChatGateway implements OnGatewayConnection {
     // //throw new Error('Method not implemented.')
   }
 
-  @SubscribeMessage(ServerEvents.GET_AND_SUBSCRIBE_CHATS)
+  @SubscribeMessage(ChatServerEvents.GET_AND_SUBSCRIBE_CHATS)
   async getChats(
     @MessageBody() userId: string,
     @ConnectedSocket() client: Socket,
@@ -53,13 +56,13 @@ export class ChatGateway implements OnGatewayConnection {
         client.join(chat.id);
       }
 
-      return { event: ClientEvents.NEW_CHATS, data: chats };
+      return { event: ChatClientEvents.NEW_CHATS, data: chats };
     } catch (error) {
-      return { event: ClientEvents.ERROR, data: error.message };
+      return { event: ChatClientEvents.ERROR, data: error.message };
     }
   }
 
-  @SubscribeMessage(ServerEvents.SEND_MESSAGE)
+  @SubscribeMessage(ChatServerEvents.SEND_MESSAGE)
   async sendMessage(
     @MessageBody() addMessageDto: AddMessageDto,
     @ConnectedSocket() client: Socket,
@@ -88,13 +91,13 @@ export class ChatGateway implements OnGatewayConnection {
 
       this.server
         .to(addMessageDto.chatId)
-        .emit(ClientEvents.NEW_MESSAGE, addMessageDto.chatId, newMessage);
+        .emit(ChatClientEvents.NEW_MESSAGE, addMessageDto.chatId, newMessage);
     } catch (error) {
-      return { event: ClientEvents.ERROR, data: error.message };
+      return { event: ChatClientEvents.ERROR, data: error.message };
     }
   }
 
-  @SubscribeMessage(ServerEvents.CREATE_CHAT)
+  @SubscribeMessage(ChatServerEvents.CREATE_CHAT)
   async createChat(
     @MessageBody() createChatDto: CreateChatDto,
     @ConnectedSocket() client: Socket,
@@ -115,13 +118,13 @@ export class ChatGateway implements OnGatewayConnection {
 
       client.join(createdChat.id);
 
-      return { event: ClientEvents.NEW_CHATS, data: chats };
+      return { event: ChatClientEvents.NEW_CHATS, data: chats };
     } catch (error) {
-      return { event: ClientEvents.ERROR, data: error };
+      return { event: ChatClientEvents.ERROR, data: error };
     }
   }
 
-  @SubscribeMessage(ServerEvents.INVITE_TO_CHAT)
+  @SubscribeMessage(ChatServerEvents.INVITE_TO_CHAT)
   async inviteToChat(
     @MessageBody() inviteToChatDto: InviteToChatDto,
     @ConnectedSocket() client: Socket,
@@ -153,9 +156,11 @@ export class ChatGateway implements OnGatewayConnection {
         invitedUser.id,
       );
       // TODO: Add chat events entities
-      this.server.to(updatedChat.id).emit(ClientEvents.NEW_CHAT_EVENT, 'ff');
+      this.server
+        .to(updatedChat.id)
+        .emit(ChatClientEvents.NEW_CHAT_EVENT, 'ff');
     } catch (error) {
-      return { event: ClientEvents.ERROR, data: error };
+      return { event: ChatClientEvents.ERROR, data: error };
     }
   }
 

@@ -1,4 +1,4 @@
-export enum ClientEvents {
+export enum ChatClientEvents {
   NEW_MESSAGE = 'NEW_MESSAGE',
   INVITED_TO_CHAT = 'INVITED_TO_CHAT',
   HISTORY_CHANGED = 'HISTORY_CHANGED',
@@ -7,11 +7,26 @@ export enum ClientEvents {
   ERROR = 'ERROR',
 }
 
-export enum ServerEvents {
+export enum ChatServerEvents {
   GET_AND_SUBSCRIBE_CHATS = 'GET_AND_SUBSCRIBE_CHATS',
   SEND_MESSAGE = 'SEND_MESSAGE',
   LEAVE_CHAT = 'LEAVE_CHAT',
   INVITE_TO_CHAT = 'INVITE_TO_CHAT',
   CREATE_CHAT = 'CREATE_CHAT',
   CHANGE_HISTORY = 'CHANGE_HISTORY',
+}
+
+export enum WebRTCSignalingServerEvents {
+  REQUEST = 'REQUEST',
+  CALL = 'CALL',
+  END = 'END',
+  DISCONNECT = 'DISCONNECT',
+}
+
+export enum WebRTCSignalingClientEvents {
+  INITIALIZATION = 'INITIALIZATION',
+  REQUEST = 'REQUEST',
+  CALL = 'CALL',
+  END = 'END',
+  DISCONNECT = 'DISCONNECT',
 }

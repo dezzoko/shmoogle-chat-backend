@@ -38,7 +38,7 @@ export class UserRepository implements IUserRepository {
   }
 
   async getKnownUsers(userId: string): Promise<UserEntity[]> {
-    const users = await this.chatModel
+    const chats = await this.chatModel
       .find(
         {
           users: {
@@ -50,9 +50,10 @@ export class UserRepository implements IUserRepository {
       .populate('users')
       .exec();
 
-    console.log('list of known users for ', userId, ' is ', users);
+    const knownUsers = [];
+    chats.forEach((chat) => knownUsers.push(...chat.users));
 
-    return users.map((u) => UserEntity.fromObject(u));
+    return Array.from(new Set(knownUsers)).map((u) => UserEntity.fromObject(u));
   }
 
   async registerUser(signupDto: SignupDto) {
