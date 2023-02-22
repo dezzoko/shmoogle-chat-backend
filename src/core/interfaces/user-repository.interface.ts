@@ -3,6 +3,7 @@ import { UserEntity } from '../entities/user.entity';
 
 export interface IUserRepository extends IGenericRepository<UserEntity> {
   getByLogin(login: string): Promise<UserEntity>;
+  getKnownUsers(userId: string): Promise<UserEntity[]>;
   registerUser(data: RegisterData): Promise<UserEntity>;
 }
 

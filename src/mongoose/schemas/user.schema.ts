@@ -16,6 +16,9 @@ export class User {
   password: string;
 
   @Prop()
+  statusId: number;
+
+  @Prop()
   avatarUrl: string;
 }
 

@@ -4,6 +4,7 @@ export class UserEntity {
     public username: string,
     public login: string,
     public password: string,
+    public statusId: number,
     public avatarUrl?: string,
   ) {}
 
@@ -22,6 +23,7 @@ export class UserEntity {
       object.username,
       object.login,
       object.password,
+      object.statusId || 1,
       object.avatarUrl,
     );
   }

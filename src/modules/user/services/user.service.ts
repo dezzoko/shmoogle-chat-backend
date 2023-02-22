@@ -34,6 +34,16 @@ export class UserService {
     return await this.userRepository.getByLogin(login);
   }
 
+  async getKnownUsers(userId: string) {
+    const user = await this.userRepository.get(userId);
+
+    if (!user) {
+      throw new BadRequestException('no such user');
+    }
+
+    return await this.userRepository.getKnownUsers(userId);
+  }
+
   async registerUser(dto: SignupDto) {
     return await this.userRepository.registerUser(dto);
   }

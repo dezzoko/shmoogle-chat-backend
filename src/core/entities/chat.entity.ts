@@ -9,6 +9,7 @@ export class ChatEntity {
     public users: UserEntity[],
     public messages: MessageEntity[],
     public isGroup: boolean,
+    public createdAt: Date,
   ) {}
 
   static fromObject(object: any) {
@@ -26,6 +27,7 @@ export class ChatEntity {
       object.users,
       object.messages || [],
       object.isGroup || false,
+      object.createdAt,
     );
   }
 }

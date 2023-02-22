@@ -1,6 +1,10 @@
+import { IsOptional } from 'class-validator';
+
 export class AddMessageDto {
   chatId: string;
   text: string;
   creatorId: string;
-  isResponseToId: string;
+
+  @IsOptional()
+  isResponseToId?: string;
 }

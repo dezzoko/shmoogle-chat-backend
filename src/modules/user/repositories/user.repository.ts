@@ -9,11 +9,15 @@ import { Model } from 'mongoose';
 import { UserEntity } from 'src/core/entities/user.entity';
 import { IUserRepository } from 'src/core/interfaces/user-repository.interface';
 import { SignupDto } from 'src/modules/auth/dto/signup.dto';
+import { Chat, ChatDocument } from 'src/mongoose/schemas/chat.schema';
 import { User, UserDocument } from 'src/mongoose/schemas/user.schema';
 
 @Injectable()
 export class UserRepository implements IUserRepository {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Chat.name) private chatModel: Model<ChatDocument>,
+  ) {}
 
   async getAll(): Promise<UserEntity[]> {
     const users = await this.userModel.find().exec();
@@ -31,6 +35,24 @@ export class UserRepository implements IUserRepository {
     } catch (error) {
       throw new Error('Cannot find user');
     }
+  }
+
+  async getKnownUsers(userId: string): Promise<UserEntity[]> {
+    const users = await this.chatModel
+      .find(
+        {
+          users: {
+            $all: [userId],
+          },
+        },
+        { users: 1 },
+      )
+      .populate('users')
+      .exec();
+
+    console.log('list of known users for ', userId, ' is ', users);
+
+    return users.map((u) => UserEntity.fromObject(u));
   }
 
   async registerUser(signupDto: SignupDto) {

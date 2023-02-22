@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
+import { Chat } from './chat.schema';
+import { User } from './user.schema';
 
 export type MessageDocument = HydratedDocument<Message>;
 
@@ -8,8 +10,11 @@ export class Message {
   @Prop()
   text: string;
 
-  @Prop()
-  creatorId: string;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User' })
+  creatorId: User;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Chat' })
+  chatId: Chat;
 
   @Prop()
   createdAt: Date;
@@ -17,8 +22,12 @@ export class Message {
   @Prop()
   hasModified: boolean;
 
-  @Prop()
-  isResponseToId: string;
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Message',
+    required: false,
+  })
+  isResponseToId: Message;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);
