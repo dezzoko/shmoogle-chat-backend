@@ -33,7 +33,7 @@ export class GoogleOAuth2Strategy extends PassportStrategy(Strategy, 'google') {
       name: `${name.givenName} ${name.familyName}`,
     };
 
-    done(null, user);
+    return user;
   }
 }
 
