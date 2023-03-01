@@ -2,6 +2,7 @@ import { Body, Controller, Post, UseGuards, Get } from '@nestjs/common';
 import { Req, Res } from '@nestjs/common/decorators';
 import { ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { Response } from 'express';
 
 import { NoAuth } from 'src/common/decorators/no-auth.decorator';
 import { GoogleOAuth2Guard } from 'src/common/guards/google-oauth.guard';
@@ -34,9 +35,10 @@ export class AuthController {
 
   @UseGuards(GoogleOAuth2Guard)
   @Get('/google-callback')
-  async googleAuthCallback(@Req() req, @Res() res) {
+  async googleAuthCallback(@Req() req, @Res() res: Response) {
     const user = req.user as GoogleUser;
-
-    return await this.authService.loginGoogleAuth(user);
+    const token = await this.authService.loginGoogleAuth(user);
+    res.set('authorization', token.accessToken);
+    return res.json(token);
   }
 }

@@ -5,29 +5,36 @@ import {
   OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { WebRTCSignalingServerEvents } from 'src/common/constants/events';
 import { WebRTCSignalingService } from '../services/webrtc-signaling.service';
-import { Socket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
 import { RtcCallDto } from '../dto/rtc-call.dto';
 import { RtcRequestDto } from '../dto/rtc-request.dto';
 import { RtcEndDto } from '../dto/rtc-end.dto';
+import { RtcJoinRoomDto } from '../dto/rtc-join-room.dto';
 
 // TODO: add proper origin and port (use config files)
 @WebSocketGateway(8080, { namespace: 'signal', cors: { origin: '*' } })
 export class WebRTCSignalingGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
+  @WebSocketServer() server: Server;
+
   constructor(private webRTCSignalingService: WebRTCSignalingService) {}
 
   handleConnection(client: Socket, ...args: any[]) {
-    console.log('initializing socket with id', client.id);
     this.webRTCSignalingService.initializeSocket(client);
   }
 
   handleDisconnect(client: Socket) {
-    console.log('disconnecting socket with id', client.id);
-    this.webRTCSignalingService.disconnectSocket(client);
+    this.webRTCSignalingService.disconnectSocket(client, this.server);
+  }
+
+  @SubscribeMessage(WebRTCSignalingServerEvents.INITIALIZATION)
+  async initialization(@ConnectedSocket() socket: Socket) {
+    this.webRTCSignalingService.initializeSocket(socket);
   }
 
   @SubscribeMessage(WebRTCSignalingServerEvents.REQUEST)
@@ -35,7 +42,6 @@ export class WebRTCSignalingGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: RtcRequestDto,
   ) {
-    console.log('REQUEST from id', socket.id, ' to ', data.to);
     this.webRTCSignalingService.request(socket, data);
   }
 
@@ -44,19 +50,19 @@ export class WebRTCSignalingGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: RtcCallDto,
   ) {
-    console.log(
-      'CALL from id',
-      socket.id,
-      ' to ',
-      data.to,
-      data.sdp || data.candidate || 'no anything',
-    );
     this.webRTCSignalingService.call(socket, data);
   }
 
   @SubscribeMessage(WebRTCSignalingServerEvents.END)
   async end(@ConnectedSocket() socket: Socket, @MessageBody() data: RtcEndDto) {
-    console.log('END from id', socket.id, ' to ', data.to);
     this.webRTCSignalingService.end(socket, data);
+  }
+
+  @SubscribeMessage(WebRTCSignalingServerEvents.JOIN_ROOM)
+  async joinRoom(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: RtcJoinRoomDto,
+  ) {
+    this.webRTCSignalingService.joinRoom(socket, this.server, data);
   }
 }

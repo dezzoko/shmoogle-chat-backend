@@ -3,6 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { Chat, ChatSchema } from './schemas/chat.schema';
+import {
+  ConferenceRoom,
+  ConferenceRoomSchema,
+} from './schemas/conference-room.schema';
 import { Message, MessageSchema } from './schemas/message.schema';
 import { User, UserSchema } from './schemas/user.schema';
 
@@ -19,6 +23,7 @@ import { User, UserSchema } from './schemas/user.schema';
       { name: User.name, schema: UserSchema },
       { name: Message.name, schema: MessageSchema },
       { name: Chat.name, schema: ChatSchema },
+      { name: ConferenceRoom.name, schema: ConferenceRoomSchema },
     ]),
   ],
   providers: [],

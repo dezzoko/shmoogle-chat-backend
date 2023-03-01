@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
+import { Strategy, Profile } from 'passport-google-oauth20';
 import { AuthService } from '../services/auth.service';
 
 @Injectable()
@@ -21,8 +21,7 @@ export class GoogleOAuth2Strategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: any,
-    done: VerifyCallback,
+    profile: Profile,
   ): Promise<any> {
     const { id, name, emails } = profile;
 

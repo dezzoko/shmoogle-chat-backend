@@ -1,14 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
 import { WebRTCSignalingClientEvents } from 'src/common/constants/events';
+import { ConferenceRoomEntity } from 'src/core/entities/conference-room.entity';
+import { ConferenceRoomService } from 'src/modules/conference-room/services/conference-room.service';
 import { RtcCallDto } from '../dto/rtc-call.dto';
+import { RtcJoinRoomDto } from '../dto/rtc-join-room.dto';
 
 @Injectable()
 export class WebRTCSignalingService {
   clients: Map<string, Socket> = new Map();
 
+  constructor(private conferenceRoomService: ConferenceRoomService) {}
+
   async initializeSocket(clientSocket: Socket) {
-    this.clients.set(clientSocket.id, clientSocket);
+    if (!this.clients.has(clientSocket.id)) {
+      this.clients.set(clientSocket.id, clientSocket);
+    }
+
     clientSocket.emit(WebRTCSignalingClientEvents.INITIALIZATION, {
       id: clientSocket.id,
     });
@@ -16,35 +24,18 @@ export class WebRTCSignalingService {
 
   async request(clientSocket: Socket, data: any) {
     const requestedClientSocket = this.clients.get(data.to);
-    if (!requestedClientSocket) {
-      console.log('on request no remote was found with id ', data.to);
-      return;
-    }
-    console.log(
-      'emitting request from ',
-      clientSocket.id,
-      ' to ',
-      requestedClientSocket.id,
-    );
+    if (!requestedClientSocket) return;
+
     requestedClientSocket.emit(WebRTCSignalingClientEvents.REQUEST, {
       from: clientSocket.id,
+      user: data.user,
     });
   }
 
   async call(clientSocket: Socket, data: RtcCallDto) {
     const requestedClientSocket = this.clients.get(data.to);
-    if (!requestedClientSocket) {
-      console.log('on call no client found with id ', data.to);
-      return;
-    }
-    console.log(
-      'Emitting call from',
-      clientSocket.id,
-      ' to ',
-      requestedClientSocket.id,
-      ' with data ',
-      data,
-    );
+    if (!requestedClientSocket) return;
+
     requestedClientSocket.emit(WebRTCSignalingClientEvents.CALL, {
       ...data,
       from: clientSocket.id,
@@ -53,26 +44,42 @@ export class WebRTCSignalingService {
 
   async end(clientSocket: Socket, data: any) {
     const requestedClientSocket = this.clients.get(data.to);
-    if (!requestedClientSocket) {
-      console.log('on end no client was found with id ', data.to);
-      return;
-    }
-    console.log(
-      'Emitting end from ',
-      clientSocket.id,
-      ' to ',
-      requestedClientSocket.id,
-      ' with data',
-      data,
-    );
-    requestedClientSocket.emit(WebRTCSignalingClientEvents.END);
+    if (!requestedClientSocket) return;
+    requestedClientSocket.emit(WebRTCSignalingClientEvents.END, {
+      from: clientSocket.id,
+    });
   }
 
-  async disconnectSocket(clientSocket: Socket) {
-    console.log(
-      'disconnecting (deleting from map) socket with id ',
-      clientSocket.id,
-    );
+  async joinRoom(clientSocket: Socket, server: Server, data: RtcJoinRoomDto) {
+    if (!this.clients.has(clientSocket.id)) return;
+    let room: ConferenceRoomEntity;
+    try {
+      room = await this.conferenceRoomService.getByJoinToken(data.joinToken);
+    } catch (error) {
+      console.error(error);
+      return;
+    }
+
+    if (!room) return;
+
+    if (!clientSocket.rooms.has(data.joinToken)) {
+      server.to(room.joinToken).emit(WebRTCSignalingClientEvents.NEW_MEMBER, {
+        from: clientSocket.id,
+        user: data.user,
+      });
+      clientSocket.join(room.joinToken);
+    }
+  }
+
+  async disconnectSocket(clientSocket: Socket, server: Server) {
+    clientSocket.rooms.forEach((room) => {
+      clientSocket.leave(room);
+      server
+        .to(room)
+        .emit(WebRTCSignalingClientEvents.END, { from: clientSocket.id });
+    });
+    clientSocket.disconnect();
+
     this.clients.delete(clientSocket.id);
   }
 }

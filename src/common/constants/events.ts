@@ -17,14 +17,17 @@ export enum ChatServerEvents {
 }
 
 export enum WebRTCSignalingServerEvents {
+  INITIALIZATION = 'INITIALIZATION',
   REQUEST = 'REQUEST',
   CALL = 'CALL',
   END = 'END',
   DISCONNECT = 'DISCONNECT',
+  JOIN_ROOM = 'JOIN_ROOM',
 }
 
 export enum WebRTCSignalingClientEvents {
   INITIALIZATION = 'INITIALIZATION',
+  NEW_MEMBER = 'NEW_MEMBER',
   REQUEST = 'REQUEST',
   CALL = 'CALL',
   END = 'END',
