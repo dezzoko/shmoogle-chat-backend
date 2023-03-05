@@ -1,0 +1,28 @@
+version: '3.0'
+
+services:
+  main:
+    container_name: main
+    build:
+      context: .
+    env_file:
+      - .dev.env
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - 3000:3000
+    command: npm run start:dev
+    depends_on:
+      - mongo
+    restart: always
+  mongo:
+    container_name: mongo
+    image: mongo:6.0
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb:/data/db
+    restart: always
+volumes:
+  mongodb:
