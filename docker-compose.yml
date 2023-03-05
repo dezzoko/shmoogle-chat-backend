@@ -24,5 +24,14 @@ services:
     volumes:
       - mongodb:/data/db
     restart: always
+  redis:
+    container_name: cache
+    image: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - redis:/data
 volumes:
   mongodb:
+  redis:
+    driver: local
