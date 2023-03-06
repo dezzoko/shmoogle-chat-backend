@@ -1,13 +1,19 @@
-import { IGenericRepository } from '../abstracts/generic-repository.abstract';
+import { FileEntity } from '../entities/file.entity';
 import { MessageEntity } from '../entities/message.entity';
 
-export interface IMessageRepository extends IGenericRepository<MessageEntity> {
-  getByChatId(id: string): Promise<MessageEntity[]>;
-  addMessage(chatId: string, message: AddMessageData): Promise<MessageEntity>;
+export interface IMessageRepository {
+  get(messageId: string): Promise<MessageEntity>;
+  update(messageId: string, data: UpdateMessageData): Promise<MessageEntity>;
+  addFiles(userId: string, fileNames: FileData[]): Promise<FileEntity[]>;
+  getFile(fileId: string): Promise<FileEntity>;
 }
 
-interface AddMessageData {
-  text: string;
-  creatorId: string;
-  isResponseToId: string;
+export interface UpdateMessageData {
+  text?: string;
+  files?: string[];
+}
+
+export interface FileData {
+  name: string;
+  path: string;
 }

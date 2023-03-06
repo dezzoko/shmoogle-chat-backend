@@ -15,8 +15,8 @@ import {
   ChatServerEvents,
 } from 'src/common/constants/events';
 import { ChatEntity } from 'src/core/entities/chat.entity';
-import { AddMessageDto } from 'src/modules/chat/dto/add-message.dto';
-import { CreateChatDto } from 'src/modules/chat/dto/create-chat.dto';
+import { AddMessageDto } from '../dto/add-message.dto';
+import { CreateChatDto } from '../dto/create-chat.dto';
 import { ChatService } from 'src/modules/chat/services/chat.service';
 import { UserService } from 'src/modules/user/services/user.service';
 import { InviteToChatDto } from '../dto/invite-to-chat.dto';
@@ -89,10 +89,13 @@ export class ChatGateway implements OnGatewayConnection {
         addMessageDto,
       );
 
+      console.log('new message!', newMessage);
+
       this.server
         .to(addMessageDto.chatId)
         .emit(ChatClientEvents.NEW_MESSAGE, addMessageDto.chatId, newMessage);
     } catch (error) {
+      console.log('cannot create message', error);
       return { event: ChatClientEvents.ERROR, data: error.message };
     }
   }

@@ -14,6 +14,7 @@ export interface AddMessageData {
   text: string;
   creatorId: string;
   isResponseToId?: string;
+  files?: string[];
 }
 
 export interface CreateChatData {

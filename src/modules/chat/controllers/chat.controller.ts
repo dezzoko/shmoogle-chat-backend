@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Body, Req } from '@nestjs/common';
+import { Controller, Get, Param, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ChatService } from '../services/chat.service';
 
