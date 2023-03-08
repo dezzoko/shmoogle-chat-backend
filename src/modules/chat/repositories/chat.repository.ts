@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common/decorators';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ChatEntity } from 'src/core/entities/chat.entity';
 import { MessageEntity } from 'src/core/entities/message.entity';
@@ -9,6 +9,7 @@ import {
   IChatRepository,
 } from 'src/core/interfaces/chat-repository.interface';
 import { Chat, ChatDocument } from 'src/mongoose/schemas/chat.schema';
+import { File, FileDocument } from 'src/mongoose/schemas/file.schema';
 import { Message, MessageDocument } from 'src/mongoose/schemas/message.schema';
 import { User, UserDocument } from 'src/mongoose/schemas/user.schema';
 import { AddMessageDto } from '../dto/add-message.dto';
@@ -19,6 +20,7 @@ export class ChatRepository implements IChatRepository {
     @InjectModel(Chat.name) private chatModel: Model<ChatDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
+    @InjectModel(File.name) private fileModel: Model<FileDocument>,
   ) {}
 
   async getByUserId(id: string): Promise<ChatEntity[]> {
@@ -63,12 +65,18 @@ export class ChatRepository implements IChatRepository {
           model: 'User',
         },
       })
+      .populate({
+        path: 'messages',
+        populate: {
+          path: 'files',
+          model: 'File',
+        },
+      })
       .exec();
 
     if (!chat) {
       throw new Error('no such chat or user not a member of this chat');
     }
-
     const messages = chat.messages.map((m) => MessageEntity.fromObject(m));
 
     return messages;
@@ -107,6 +115,7 @@ export class ChatRepository implements IChatRepository {
     }
   }
 
+  // TODO: transaction?
   async addMessage(id: string, message: AddMessageData) {
     const user = await this.userModel.findById(message.creatorId).exec();
 
@@ -120,20 +129,34 @@ export class ChatRepository implements IChatRepository {
       throw new Error('no such chat');
     }
 
+    const files = await this.fileModel
+      .find({
+        name: {
+          $in: [...message.files],
+        },
+      })
+      .exec();
+
     const createdMessage = new this.messageModel({
       ...message,
       chatId: id,
       hasModified: false,
       createdAt: new Date(),
+      files: files ? files.map((file) => file._id) : undefined,
     });
     await createdMessage.save();
+
+    files.forEach((file) => (file.message = createdMessage));
+    this.fileModel.bulkSave(files);
 
     chat.messages.push(createdMessage);
     await chat.save();
 
-    const populatedCreatedMessage = await createdMessage.populate('creatorId');
+    const populatedWithUser = await createdMessage.populate('creatorId');
+    const populatedWithFiles = await populatedWithUser.populate('files');
 
-    return MessageEntity.fromObject(populatedCreatedMessage);
+    console.log('populated', populatedWithFiles);
+    return MessageEntity.fromObject(populatedWithFiles);
   }
 
   async addUserToChat(chatId: string, userId: string): Promise<ChatEntity> {

@@ -1,3 +1,5 @@
+import { FileEntity } from './file.entity';
+
 export class MessageEntity {
   constructor(
     public id: string,
@@ -7,6 +9,7 @@ export class MessageEntity {
     public createdAt: Date,
     public hasModified: boolean,
     public isResponseToId?: string,
+    public files?: FileEntity[],
   ) {}
 
   static fromObject(object: any) {
@@ -18,6 +21,10 @@ export class MessageEntity {
     ) {
       throw new Error('cannot create MessageEntity from object');
     }
+    let files;
+    if (object.files && object.files?.length > 0) {
+      files = object.files.map((file) => FileEntity.fromObject(file));
+    }
 
     return new MessageEntity(
       object.id || object._id,
@@ -27,6 +34,7 @@ export class MessageEntity {
       object.createdAt || new Date(),
       object.hasModified || false,
       object.isResponseToId || null,
+      files,
     );
   }
 }
