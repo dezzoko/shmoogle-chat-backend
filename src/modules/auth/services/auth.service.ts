@@ -1,5 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common/exceptions';
+import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common/exceptions';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
@@ -8,6 +11,8 @@ import { SignupDto } from '../dto/signup.dto';
 import { comparePassword } from 'src/common/utils/bcrypt';
 import { LoginDto } from '../dto/login.dto';
 import { GoogleUser } from '../strategies/google-oauth2.strategy';
+import { Cache } from 'cache-manager';
+import { RefreshTokenPayload } from 'src/common/types/refresh-token-payload';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +20,7 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    @Inject(CACHE_MANAGER) private cacheService: Cache,
   ) {}
 
   async validateUser(id: string) {
@@ -51,12 +57,11 @@ export class AuthService {
       });
     }
 
-    const payload = {
-      userId: found.id,
-    };
+    const { accessToken, refreshToken } = await this.generateTokens(found.id);
 
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
       expiresIn: this.configService.get<string>('auth.expiresIn'),
     };
   }
@@ -71,11 +76,64 @@ export class AuthService {
       throw new BadRequestException('Login or password is incorrect');
     }
 
-    const payload = { userId: found.id };
+    const { accessToken, refreshToken } = await this.generateTokens(found.id);
 
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
       expiresIn: this.configService.get<string>('auth.expiresIn'),
+    };
+  }
+
+  async grantNewTokens(refreshToken: string) {
+    try {
+      this.jwtService.verify(refreshToken);
+    } catch (error) {
+      throw new ForbiddenException('Invalid token');
+    }
+
+    const payload = this.jwtService.decode(refreshToken) as RefreshTokenPayload;
+
+    const cachedToken = await this.cacheService.get(payload.userId);
+
+    if (cachedToken !== refreshToken) {
+      throw new ForbiddenException('Invalid token');
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.generateTokens(payload.userId);
+
+    return {
+      accessToken,
+      newRefreshToken,
+      expiresIn: this.configService.get<string>('auth.expiresIn'),
+    };
+  }
+
+  private async generateTokens(userId: string) {
+    const refreshExpiresIn = this.configService.get<number>(
+      'auth.refreshExpiresIn',
+    );
+
+    const accessToken = this.jwtService.sign({
+      userId: userId,
+    });
+
+    const refreshToken = this.jwtService.sign(
+      {
+        userId: userId,
+        refresh: true,
+      },
+      {
+        expiresIn: refreshExpiresIn / 100,
+      },
+    );
+
+    this.cacheService.set(userId, refreshToken, refreshExpiresIn);
+
+    return {
+      accessToken,
+      refreshToken,
     };
   }
 }

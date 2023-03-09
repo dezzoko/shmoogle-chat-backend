@@ -6,6 +6,7 @@ import { Response } from 'express';
 
 import { NoAuth } from 'src/common/decorators/no-auth.decorator';
 import { GoogleOAuth2Guard } from 'src/common/guards/google-oauth.guard';
+import { GrantNewTokensDto } from '../dto/grant-new-tokens.dto';
 import { LoginDto } from '../dto/login.dto';
 import { SignupDto } from '../dto/signup.dto';
 import { AuthService } from '../services/auth.service';
@@ -26,6 +27,13 @@ export class AuthController {
   @Post('/signup')
   async signup(@Body() signupDto: SignupDto) {
     return await this.authService.signup(signupDto);
+  }
+
+  @Post('/grantNewTokens')
+  async grantNewTokens(@Body() grantNewTokensDto: GrantNewTokensDto) {
+    return await this.authService.grantNewTokens(
+      grantNewTokensDto.refreshToken,
+    );
   }
 
   @UseGuards(GoogleOAuth2Guard)

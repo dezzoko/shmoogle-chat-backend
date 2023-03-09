@@ -15,6 +15,7 @@ services:
     command: npm run start:dev
     depends_on:
       - mongo
+      - redis
     restart: always
   mongo:
     container_name: mongo
