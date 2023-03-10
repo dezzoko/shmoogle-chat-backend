@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common/decorators';
-import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ChatEntity } from 'src/core/entities/chat.entity';
 import { MessageEntity } from 'src/core/entities/message.entity';
@@ -12,7 +12,6 @@ import { Chat, ChatDocument } from 'src/mongoose/schemas/chat.schema';
 import { File, FileDocument } from 'src/mongoose/schemas/file.schema';
 import { Message, MessageDocument } from 'src/mongoose/schemas/message.schema';
 import { User, UserDocument } from 'src/mongoose/schemas/user.schema';
-import { AddMessageDto } from '../dto/add-message.dto';
 
 @Injectable()
 export class ChatRepository implements IChatRepository {
@@ -28,6 +27,7 @@ export class ChatRepository implements IChatRepository {
       .find({
         users: { $all: [id] },
       })
+      .populate('users')
       .exec();
 
     return chats.map((chat) => ChatEntity.fromObject(chat));
@@ -109,7 +109,8 @@ export class ChatRepository implements IChatRepository {
         messages: [],
       });
       await createdChat.save();
-      return ChatEntity.fromObject(createdChat);
+      const populated = await createdChat.populate('users');
+      return ChatEntity.fromObject(populated);
     } catch (error) {
       throw new Error('Cannot create chat');
     }
