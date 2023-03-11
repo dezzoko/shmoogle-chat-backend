@@ -9,6 +9,8 @@ import { USER_REPOSITORY } from 'src/common/constants/tokens';
 import { IUserRepository } from 'src/core/interfaces/user-repository.interface';
 import { SignupDto } from 'src/modules/auth/dto/signup.dto';
 import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdatePasswordDto } from '../dto/update-password-dto';
+import { UpdateUserDto } from '../dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -55,6 +57,24 @@ export class UserService {
       return createdUser;
     } catch (error) {
       throw new BadRequestException('Cannot create user', error.message);
+    }
+  }
+
+  async update(dto: UpdateUserDto, userId: string) {
+    try {
+      const updatedUser = await this.userRepository.update(userId, dto);
+      return updatedUser;
+    } catch (error) {
+      throw new BadRequestException('Cannot update user', error.message);
+    }
+  }
+
+  async updatePassword(dto: UpdatePasswordDto, userId: string) {
+    try {
+      const updatedUser = await this.userRepository.updatePassword(userId, dto);
+      return updatedUser;
+    } catch (error) {
+      throw new BadRequestException('Cannot update password', error.message);
     }
   }
 }

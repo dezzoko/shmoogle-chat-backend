@@ -24,14 +24,22 @@ import * as redisStore from 'cache-manager-redis-store';
       inject: [ConfigService],
     }),
     CacheModule.register({
-      useFactory: async (configService: ConfigService) => ({
-        isGlobal: true,
-        // @ts-ignore
-        store: redisStore,
-        host: configService.get<string>('redis.host'),
-        port: configService.get<number>('redis.port'),
-      }),
+      isGlobal: true,
+      //@ts-ignore
+      store: redisStore,
+      host: 'localhost',
+      port: 6379,
     }),
+    // CacheModule.register({
+    //   useFactory: async (configService: ConfigService) => ({
+    //     isGlobal: true,
+    //     // @ts-ignore
+    //     store: redisStore,
+    //     host: configService.get<string>('redis.host'),
+    //     port: configService.get<number>('redis.port'),
+    //   }),
+    //   inject: [ConfigService],
+    // }),
     ModulesModule,
     AppMongooseModule,
   ],
