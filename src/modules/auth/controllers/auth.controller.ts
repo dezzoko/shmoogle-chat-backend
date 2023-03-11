@@ -1,5 +1,5 @@
-import { Body, Controller, Post, UseGuards, Get } from '@nestjs/common';
-import { Req, Res } from '@nestjs/common/decorators';
+import { Body, Controller, Post, UseGuards, Get, CacheInterceptor } from '@nestjs/common';
+import { Req, Res, UseInterceptors } from '@nestjs/common/decorators';
 import { ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Response } from 'express';
@@ -18,12 +18,12 @@ import { GoogleUser } from '../strategies/google-oauth2.strategy';
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
-
+  @UseInterceptors(CacheInterceptor)
   @Post('/login')
   async login(@Body() loginDto: LoginDto) {
     return await this.authService.login(loginDto);
   }
-
+  @UseInterceptors(CacheInterceptor)
   @Post('/signup')
   async signup(@Body() signupDto: SignupDto) {
     return await this.authService.signup(signupDto);
