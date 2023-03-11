@@ -105,7 +105,7 @@ export class AuthService {
 
     return {
       accessToken,
-      newRefreshToken,
+      refreshToken: newRefreshToken,
       expiresIn: this.configService.get<string>('auth.expiresIn'),
     };
   }
