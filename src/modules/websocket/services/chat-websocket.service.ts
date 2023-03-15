@@ -64,7 +64,6 @@ export class ChatWebsocketService {
     const newMessage = await this.chatService.addMessage(chatId, addMessageDto);
 
     //console.log('new message!', newMessage);
-
     server.to(chatId).emit(ChatClientEvents.NEW_MESSAGE, chatId, newMessage);
   }
 

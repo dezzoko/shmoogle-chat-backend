@@ -9,6 +9,7 @@ export class MessageEntity {
     public createdAt: Date,
     public hasModified: boolean,
     public isResponseToId?: string,
+    public responses?: MessageEntity,
     public files?: FileEntity[],
   ) {}
 
@@ -26,6 +27,13 @@ export class MessageEntity {
       files = object.files.map((file) => FileEntity.fromObject(file));
     }
 
+    let responses;
+    if (object.responses && object.responses.length && !object.isResponseToId) {
+      responses = object.responses.map((message) =>
+        MessageEntity.fromObject(message),
+      );
+    }
+
     return new MessageEntity(
       object.id || object._id,
       object.text,
@@ -35,6 +43,7 @@ export class MessageEntity {
       object.hasModified || false,
       object.isResponseToId || null,
       files,
+      responses,
     );
   }
 }

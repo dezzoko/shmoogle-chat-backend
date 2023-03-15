@@ -72,6 +72,13 @@ export class ChatRepository implements IChatRepository {
           model: 'File',
         },
       })
+      .populate({
+        path: 'messages',
+        populate: {
+          path: 'responses',
+          model: 'Message',
+        },
+      })
       .exec();
 
     if (!chat) {
@@ -147,17 +154,32 @@ export class ChatRepository implements IChatRepository {
     });
     await createdMessage.save();
 
+    if (message.isResponseToId) {
+      const responseToMessage = await this.messageModel.findById(
+        message.isResponseToId,
+      );
+      if (!responseToMessage) {
+        throw new Error('no such message');
+      }
+      responseToMessage.responses.push(createdMessage);
+      await responseToMessage.save();
+    }
+
     files.forEach((file) => (file.message = createdMessage));
     this.fileModel.bulkSave(files);
 
     chat.messages.push(createdMessage);
     await chat.save();
 
-    const populatedWithUser = await createdMessage.populate('creatorId');
-    const populatedWithFiles = await populatedWithUser.populate('files');
+    const populatedMessage = await this.messageModel
+      .findById(createdMessage._id)
+      .populate('creatorId')
+      .populate('files')
+      .populate('responses')
+      .exec();
 
-    console.log('populated', populatedWithFiles);
-    return MessageEntity.fromObject(populatedWithFiles);
+    console.log('populated', populatedMessage);
+    return MessageEntity.fromObject(populatedMessage);
   }
 
   async addUserToChat(chatId: string, userId: string): Promise<ChatEntity> {
