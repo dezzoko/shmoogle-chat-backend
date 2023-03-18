@@ -19,4 +19,7 @@ export class UpdateUserDto {
   @IsOptional()
   @IsIn([1, 2, 3])
   statusId?: number;
+
+  @IsOptional()
+  avatarUrl: string;
 }

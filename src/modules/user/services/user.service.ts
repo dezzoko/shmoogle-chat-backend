@@ -8,6 +8,7 @@ import {
 import { USER_REPOSITORY } from 'src/common/constants/tokens';
 import { IUserRepository } from 'src/core/interfaces/user-repository.interface';
 import { SignupDto } from 'src/modules/auth/dto/signup.dto';
+import { FileService } from 'src/modules/file/file.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdatePasswordDto } from '../dto/update-password-dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -16,6 +17,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 export class UserService {
   constructor(
     @Inject(USER_REPOSITORY) private userRepository: IUserRepository,
+    private fileService: FileService,
   ) {}
 
   async get(id: string) {
@@ -60,9 +62,15 @@ export class UserService {
     }
   }
 
-  async update(dto: UpdateUserDto, userId: string) {
+  async update(dto: UpdateUserDto, userId: string, avatarFile: string) {
     try {
-      const updatedUser = await this.userRepository.update(userId, dto);
+      const avatarUrl = this.fileService.createFile(avatarFile);
+      const user = await this.userRepository.get(userId);
+      this.fileService.removeFile(user.avatarUrl);
+      const updatedUser = await this.userRepository.update(userId, {
+        ...dto,
+        avatarUrl,
+      });
       return updatedUser;
     } catch (error) {
       throw new BadRequestException('Cannot update user', error.message);

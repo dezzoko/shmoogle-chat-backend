@@ -9,6 +9,8 @@ import { AppMongooseModule } from './mongoose/mongoose.module';
 import { ModulesModule } from './modules/modules.module';
 import { ThrottlerModule } from '@nestjs/throttler/dist/throttler.module';
 import { redisStore } from 'cache-manager-redis-yet';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import * as path from 'path';
 
 @Module({
   imports: [
@@ -38,6 +40,9 @@ import { redisStore } from 'cache-manager-redis-yet';
       }),
       isGlobal: true,
       inject: [ConfigService],
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: path.resolve('assets'),
     }),
 
     ModulesModule,
