@@ -7,9 +7,10 @@ import {
   Req,
   UseInterceptors,
   CacheInterceptor,
-  Patch,
   Put,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdatePasswordDto } from '../dto/update-password-dto';
@@ -47,10 +48,14 @@ export class UserController {
   async create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto);
   }
-
+  @UseInterceptors(FileInterceptor('avatarUrl'))
   @Put('update')
-  async update(@Req() req, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(updateUserDto, req.user.id);
+  async update(
+    @Req() req,
+    @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() avatarUrl,
+  ) {
+    return this.userService.update(updateUserDto, req.user.id, avatarUrl);
   }
 
   @Put('update/password')
