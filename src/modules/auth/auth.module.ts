@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 
 import { AuthService } from './services/auth.service';
@@ -10,6 +10,7 @@ import { UserModule } from '../user/user.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleOAuth2Strategy } from './strategies/google-oauth2.strategy';
 import { AuthController } from './controllers/auth.controller';
+import { JWT_SERVICE } from 'src/common/constants/tokens';
 
 @Module({
   controllers: [AuthController],
@@ -27,6 +28,10 @@ import { AuthController } from './controllers/auth.controller';
     }),
   ],
   providers: [
+    {
+      provide: JWT_SERVICE,
+      useClass: JwtService,
+    },
     AuthService,
     JwtStrategy,
     GoogleOAuth2Strategy,
@@ -35,5 +40,6 @@ import { AuthController } from './controllers/auth.controller';
       useClass: JwtAuthGuard,
     },
   ],
+  exports: [JWT_SERVICE, AuthService],
 })
 export class AuthModule {}

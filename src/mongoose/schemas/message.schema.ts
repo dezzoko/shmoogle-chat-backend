@@ -31,6 +31,12 @@ export class Message {
   isResponseToId: Message;
 
   @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Message' }],
+    required: false,
+  })
+  responses: Message[];
+
+  @Prop({
     type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'File' }],
     required: false,
   })

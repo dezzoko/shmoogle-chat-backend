@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common/decorators';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
+import { GenericUpdateData } from 'src/core/abstracts/generic-repository.abstract';
 import { ChatEntity } from 'src/core/entities/chat.entity';
 import { MessageEntity } from 'src/core/entities/message.entity';
 import {
@@ -12,7 +13,6 @@ import { Chat, ChatDocument } from 'src/mongoose/schemas/chat.schema';
 import { File, FileDocument } from 'src/mongoose/schemas/file.schema';
 import { Message, MessageDocument } from 'src/mongoose/schemas/message.schema';
 import { User, UserDocument } from 'src/mongoose/schemas/user.schema';
-import { AddMessageDto } from '../dto/add-message.dto';
 
 @Injectable()
 export class ChatRepository implements IChatRepository {
@@ -21,6 +21,7 @@ export class ChatRepository implements IChatRepository {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
     @InjectModel(File.name) private fileModel: Model<FileDocument>,
+    @InjectConnection() private mongooseConnection: mongoose.Connection,
   ) {}
 
   async getByUserId(id: string): Promise<ChatEntity[]> {
@@ -28,6 +29,7 @@ export class ChatRepository implements IChatRepository {
       .find({
         users: { $all: [id] },
       })
+      .populate('users')
       .exec();
 
     return chats.map((chat) => ChatEntity.fromObject(chat));
@@ -72,6 +74,13 @@ export class ChatRepository implements IChatRepository {
           model: 'File',
         },
       })
+      .populate({
+        path: 'messages',
+        populate: {
+          path: 'responses',
+          model: 'Message',
+        },
+      })
       .exec();
 
     if (!chat) {
@@ -109,7 +118,8 @@ export class ChatRepository implements IChatRepository {
         messages: [],
       });
       await createdChat.save();
-      return ChatEntity.fromObject(createdChat);
+      const populated = await createdChat.populate('users');
+      return ChatEntity.fromObject(populated);
     } catch (error) {
       throw new Error('Cannot create chat');
     }
@@ -117,12 +127,6 @@ export class ChatRepository implements IChatRepository {
 
   // TODO: transaction?
   async addMessage(id: string, message: AddMessageData) {
-    const user = await this.userModel.findById(message.creatorId).exec();
-
-    if (!user) {
-      throw new Error('no such user');
-    }
-
     const chat = await this.chatModel.findById(id).exec();
 
     if (!chat) {
@@ -146,17 +150,31 @@ export class ChatRepository implements IChatRepository {
     });
     await createdMessage.save();
 
+    if (message.isResponseToId) {
+      const responseToMessage = await this.messageModel.findById(
+        message.isResponseToId,
+      );
+      if (!responseToMessage) {
+        throw new Error('no such message');
+      }
+      responseToMessage.responses.push(createdMessage);
+      await responseToMessage.save();
+    }
+
     files.forEach((file) => (file.message = createdMessage));
     this.fileModel.bulkSave(files);
 
     chat.messages.push(createdMessage);
     await chat.save();
 
-    const populatedWithUser = await createdMessage.populate('creatorId');
-    const populatedWithFiles = await populatedWithUser.populate('files');
+    const populatedMessage = await this.messageModel
+      .findById(createdMessage._id)
+      .populate('creatorId')
+      .populate('files')
+      .populate('responses')
+      .exec();
 
-    console.log('populated', populatedWithFiles);
-    return MessageEntity.fromObject(populatedWithFiles);
+    return MessageEntity.fromObject(populatedMessage);
   }
 
   async addUserToChat(chatId: string, userId: string): Promise<ChatEntity> {
@@ -183,11 +201,46 @@ export class ChatRepository implements IChatRepository {
     return ChatEntity.fromObject(updatedChat);
   }
 
-  async update(id: string, item: any): Promise<ChatEntity> {
-    throw new Error('Method not implemented.');
+  async update(
+    id: string,
+    item: GenericUpdateData<ChatEntity>,
+  ): Promise<ChatEntity> {
+    const chat = await this.chatModel.findByIdAndUpdate(id, item);
+    return ChatEntity.fromObject(chat);
   }
 
+  // TODO: transaction
   async delete(id: string): Promise<boolean> {
-    throw new Error('Method not implemented.');
+    const chat = await this.chatModel.findById(id);
+
+    if (!chat) {
+      throw new Error('no such chat');
+    }
+
+    const session = await this.mongooseConnection.startSession();
+    session.startTransaction();
+    try {
+      await this.fileModel
+        .deleteMany({
+          message: {
+            $in: [...chat.messages],
+          },
+        })
+        .populate('message');
+
+      await this.messageModel.deleteMany({
+        chatId: id,
+      });
+
+      await chat.remove();
+
+      session.commitTransaction();
+      return true;
+    } catch (error) {
+      session.abortTransaction();
+      return false;
+    } finally {
+      session.endSession();
+    }
   }
 }
