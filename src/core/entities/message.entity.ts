@@ -42,8 +42,8 @@ export class MessageEntity {
       object.createdAt || new Date(),
       object.hasModified || false,
       object.isResponseToId || null,
-      files,
-      responses,
+      responses || [],
+      files || [],
     );
   }
 }

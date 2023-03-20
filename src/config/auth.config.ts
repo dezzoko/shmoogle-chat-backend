@@ -2,7 +2,7 @@ export default () => ({
   auth: {
     secret: process.env.AUTH_SECRET || 'secret',
     expiresIn: process.env.AUTH_EXPIRES || '1h',
-    refreshExpiresIn: +process.env.AUTH_REFRESH_EXPIRES || 3000000,
+    refreshExpiresIn: +process.env.AUTH_REFRESH_EXPIRES || 30000000,
   },
   authGoogle: {
     secret: process.env.GOOGLE_SECRET || 'secret',

@@ -54,6 +54,12 @@ export class ChatService {
   }
 
   async addMessage(id: string, message: AddMessageDto) {
+    const user = await this.userService.get(message.creatorId);
+
+    if (!user) {
+      throw new Error('no such user');
+    }
+
     return this.chatRepository.addMessage(id, message);
   }
 

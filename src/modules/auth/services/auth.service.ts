@@ -89,7 +89,7 @@ export class AuthService {
     try {
       this.jwtService.verify(refreshToken);
     } catch (error) {
-      throw new ForbiddenException('Invalid token');
+      throw new ForbiddenException('Invalid token, cannot verify');
     }
 
     const payload = this.jwtService.decode(refreshToken) as RefreshTokenPayload;
@@ -97,7 +97,7 @@ export class AuthService {
     const cachedToken = await this.cacheService.get(payload.userId);
 
     if (cachedToken !== refreshToken) {
-      throw new ForbiddenException('Invalid token');
+      throw new ForbiddenException('Invalid token, not equal to existing');
     }
 
     const { accessToken, refreshToken: newRefreshToken } =
