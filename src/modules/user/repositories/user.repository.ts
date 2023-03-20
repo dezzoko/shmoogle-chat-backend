@@ -1,15 +1,11 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   BadRequestException,
-  HttpException,
-  NotFoundException,
   NotImplementedException,
 } from '@nestjs/common/exceptions';
 import { InjectModel } from '@nestjs/mongoose';
-import { STATUS_CODES } from 'http';
 import { Model } from 'mongoose';
 import { comparePassword, hashPasword } from 'src/common/utils/bcrypt';
-
 import { UserEntity } from 'src/core/entities/user.entity';
 import { IUserRepository } from 'src/core/interfaces/user-repository.interface';
 import { SignupDto } from 'src/modules/auth/dto/signup.dto';
@@ -119,5 +115,15 @@ export class UserRepository implements IUserRepository {
 
   delete(id: string): Promise<boolean> {
     throw new NotImplementedException('Method not implemented.');
+  }
+  async updateAvatar(userId: string, avatarUrl: string): Promise<UserEntity> {
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      userId,
+      { avatarUrl: avatarUrl },
+      {
+        new: true,
+      },
+    );
+    return UserEntity.fromObject(updatedUser);
   }
 }

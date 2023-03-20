@@ -33,7 +33,23 @@ services:
       - 6379:6379
     volumes:
       - redis:/data
+  minio:
+    container_name: minio
+    image: docker.io/bitnami/minio:2022
+    env_file:
+      - .dev.env
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    ports:
+      - 9000:9000
+      - 9001:9001
+    command: minio server --console-address ":9001" /data
+    volumes:
+      - 'minio_data:/data'
+
 volumes:
   mongodb:
   redis:
+  minio_data:
     driver: local

@@ -6,6 +6,7 @@ import { SwaggerModule } from '@nestjs/swagger/dist';
 import helmet from 'helmet';
 
 import { AppModule } from './app.module';
+import { MinioService } from './modules/minio/minio.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -37,6 +38,8 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   const configService: ConfigService = app.get(ConfigService);
+  const minioService = app.get<MinioService>(MinioService);
+  await minioService.createBucket();
 
   await app.listen(configService.get('port'));
 }

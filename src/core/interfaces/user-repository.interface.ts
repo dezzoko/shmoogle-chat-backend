@@ -6,6 +6,7 @@ export interface IUserRepository extends IGenericRepository<UserEntity> {
   getKnownUsers(userId: string): Promise<UserEntity[]>;
   registerUser(data: RegisterData): Promise<UserEntity>;
   updatePassword(userId: string, data: UpdatePasswordData): Promise<UserEntity>;
+  updateAvatar(userId: string, avatarUrl: string): Promise<UserEntity>;
 }
 
 interface RegisterData {
