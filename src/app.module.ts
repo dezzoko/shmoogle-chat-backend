@@ -41,9 +41,6 @@ import * as path from 'path';
       isGlobal: true,
       inject: [ConfigService],
     }),
-    ServeStaticModule.forRoot({
-      rootPath: path.resolve('assets'),
-    }),
 
     ModulesModule,
     AppMongooseModule,

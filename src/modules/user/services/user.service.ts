@@ -4,12 +4,14 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { use } from 'passport';
 
 import { USER_REPOSITORY } from 'src/common/constants/tokens';
+import { NoAuth } from 'src/common/decorators/no-auth.decorator';
 import { IUserRepository } from 'src/core/interfaces/user-repository.interface';
 import { SignupDto } from 'src/modules/auth/dto/signup.dto';
 import { FileService } from 'src/modules/file/file.service';
-import { MinioService } from 'src/modules/minio/minio.service';
+import { BucketNames, MinioService } from 'src/modules/minio/minio.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdatePasswordDto } from '../dto/update-password-dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -19,7 +21,6 @@ export class UserService {
   constructor(
     @Inject(USER_REPOSITORY) private userRepository: IUserRepository,
     private minioService: MinioService,
-    private fileService: FileService,
   ) {}
 
   async get(id: string) {
@@ -82,13 +83,22 @@ export class UserService {
   }
 
   async updateAvatar(avatar: Express.Multer.File, userId: string) {
-    console.log(avatar);
+    if (!avatar.mimetype.includes('image')) {
+      throw new BadRequestException('Avatar must be image');
+    }
 
-    const avatarUrl = await this.minioService.uploadFile(avatar);
+    const avatarUrl = await this.minioService.uploadFile(
+      avatar,
+      BucketNames.avatars,
+    );
     const updatedUser = await this.userRepository.updateAvatar(
       userId,
       avatarUrl,
     );
     return updatedUser;
+  }
+  async getAvatar(userId: string) {
+    const { avatarUrl } = await this.userRepository.get(userId);
+    return await this.minioService.downloadFile(avatarUrl, BucketNames.avatars);
   }
 }

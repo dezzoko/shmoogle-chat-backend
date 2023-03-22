@@ -2,10 +2,15 @@ import { Injectable, StreamableFile } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as uuid from 'uuid';
 import * as Minio from 'minio';
+
+export enum BucketNames {
+  messages = 'messages',
+  avatars = 'avatars',
+}
 @Injectable()
 export class MinioService {
   private minioClient: Minio.Client;
-  private static readonly BUCKET_NAME = 'shmoogle';
+  public BucketNames: BucketNames;
 
   constructor(private readonly configService: ConfigService) {
     this.minioClient = new Minio.Client({
@@ -18,39 +23,32 @@ export class MinioService {
   }
 
   async createBucket(): Promise<void> {
-    const bucketExists = await this.minioClient.bucketExists(
-      MinioService.BUCKET_NAME,
-    );
-    if (!bucketExists) {
-      await this.minioClient.makeBucket(MinioService.BUCKET_NAME, 'us-east-1');
-    }
+    Object.keys(BucketNames).forEach(async (bucketName) => {
+      const bucketExists = await this.minioClient.bucketExists(bucketName);
+      if (!bucketExists) {
+        await this.minioClient.makeBucket(bucketName, 'us-east-1');
+      }
+    });
   }
 
-  async uploadFile(file: Express.Multer.File) {
+  async uploadFile(file: Express.Multer.File, bucketName: BucketNames) {
     const fileExtension = file.originalname.split('.').pop();
-    const fileName = uuid.v4() + '.' + fileExtension;
+    const fileName = uuid.v4() + file.originalname + '.' + fileExtension;
     await this.minioClient.putObject(
-      MinioService.BUCKET_NAME,
+      bucketName,
       fileName,
       file.buffer,
       file.size,
     );
     return fileName;
   }
-  //
-  async getFile(fileName: string) {
-    return await this.minioClient.presignedUrl(
-      'GET',
-      MinioService.BUCKET_NAME,
-      fileName,
-    );
+
+  async getFile(fileName: string, bucketName: BucketNames) {
+    return await this.minioClient.presignedUrl('GET', bucketName, fileName);
   }
 
-  async downloadFile(fileName: string) {
-    const fileURL = await this.minioClient.getObject(
-      MinioService.BUCKET_NAME,
-      fileName,
-    );
+  async downloadFile(fileName: string, bucketName: BucketNames) {
+    const fileURL = await this.minioClient.getObject(bucketName, fileName);
 
     return new StreamableFile(fileURL);
   }

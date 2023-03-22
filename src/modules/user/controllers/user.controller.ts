@@ -9,10 +9,11 @@ import {
   CacheInterceptor,
   Put,
   UploadedFile,
+  StreamableFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
-import { MinioService } from 'src/modules/minio/minio.service';
+import { BucketNames, MinioService } from 'src/modules/minio/minio.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdatePasswordDto } from '../dto/update-password-dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -63,22 +64,12 @@ export class UserController {
   async updateAvatar(@Req() req, @UploadedFile() avatar: Express.Multer.File) {
     return await this.userService.updateAvatar(avatar, req.user.id);
   }
-  // @Post('test')
-  //
-  // async testPoint(@UploadedFile() file: Express.Multer.File) {
-  //   const fileName = await this.minioService.uploadFile(file);
-  //   const fileUrl = await this.minioService.getFile(fileName);
-  //   return {
-  //     fileName,
-  //     fileUrl,
-  //   };
-  // }
   @NoAuth()
-  @Get('test')
-  async test() {
-    return await this.minioService.downloadFile(
-      '1020dcc0-4008-41e9-b6f8-b6f8f17c8ce7.png',
-    );
+  @Get(':id/avatar')
+  async getAvatar(@Param('id') id: string): Promise<StreamableFile> {
+    console.log(typeof id);
+
+    return this.userService.getAvatar(id);
   }
   @Get('')
   async getAll() {
@@ -90,3 +81,4 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 }
+//
