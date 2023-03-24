@@ -4,13 +4,9 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { use } from 'passport';
-
 import { USER_REPOSITORY } from 'src/common/constants/tokens';
-import { NoAuth } from 'src/common/decorators/no-auth.decorator';
 import { IUserRepository } from 'src/core/interfaces/user-repository.interface';
 import { SignupDto } from 'src/modules/auth/dto/signup.dto';
-import { FileService } from 'src/modules/file/file.service';
 import { BucketNames, MinioService } from 'src/modules/minio/minio.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdatePasswordDto } from '../dto/update-password-dto';
