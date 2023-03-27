@@ -15,10 +15,10 @@ export class MinioService {
   constructor(private readonly configService: ConfigService) {
     this.minioClient = new Minio.Client({
       endPoint: 'minio',
-      port: 9000, //+this.configService.get('MINIO_PORT'),
+      port: +this.configService.get('MINIO_PORT'),
       useSSL: this.configService.get('MINIO_USE_SSL') === 'true',
-      accessKey: 'OH4aJ3AXdgU4q9dx', // this.configService.get('MINIO_ACCESS_KEY'),
-      secretKey: 'WIfsXzNl7MATvgnWT2Vl8ex3PPAW3Ieh', //this.configService.get('MINIO_SECRET_KEY'),
+      accessKey: this.configService.get('MINIO_ACCESS_KEY'),
+      secretKey: this.configService.get('MINIO_SECRET_KEY'),
     });
   }
 
@@ -51,5 +51,9 @@ export class MinioService {
     const fileURL = await this.minioClient.getObject(bucketName, fileName);
 
     return new StreamableFile(fileURL);
+  }
+
+  async deleteFile(fileName: string, bucketName: BucketNames) {
+    return await this.minioClient.removeObject(bucketName, fileName);
   }
 }

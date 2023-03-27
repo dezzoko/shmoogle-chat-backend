@@ -82,7 +82,10 @@ export class UserService {
     if (!avatar.mimetype.includes('image')) {
       throw new BadRequestException('Avatar must be image');
     }
-
+    const user = await this.userRepository.get(userId);
+    if (user.avatarUrl) {
+      this.minioService.deleteFile(user.avatarUrl, BucketNames.avatars);
+    }
     const avatarUrl = await this.minioService.uploadFile(
       avatar,
       BucketNames.avatars,
