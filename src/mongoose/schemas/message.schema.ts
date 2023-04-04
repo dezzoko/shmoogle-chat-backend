@@ -1,4 +1,4 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { Chat } from './chat.schema';
 import { File } from './file.schema';
@@ -6,6 +6,19 @@ import { User } from './user.schema';
 
 export type MessageDocument = HydratedDocument<Message>;
 
+const LikeSchema = new mongoose.Schema(
+  {
+    userId: String,
+    value: String,
+  },
+  {
+    toJSON: {
+      transform: (doc, ret) => {
+        delete ret._id;
+      },
+    },
+  },
+);
 @Schema()
 export class Message {
   @Prop()
@@ -41,6 +54,10 @@ export class Message {
     required: false,
   })
   files?: File[];
+  @Prop({
+    type: [LikeSchema],
+    required: false,
+  })
+  likes: object[];
 }
-
 export const MessageSchema = SchemaFactory.createForClass(Message);

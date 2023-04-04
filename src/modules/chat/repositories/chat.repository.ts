@@ -8,6 +8,7 @@ import {
   AddMessageData,
   CreateChatData,
   IChatRepository,
+  LikeData,
 } from 'src/core/interfaces/chat-repository.interface';
 import { Chat, ChatDocument } from 'src/mongoose/schemas/chat.schema';
 import { File, FileDocument } from 'src/mongoose/schemas/file.schema';
@@ -52,6 +53,18 @@ export class ChatRepository implements IChatRepository {
     return ChatEntity.fromObject(chat);
   }
 
+  async addLike(messageId: string, likeData: LikeData): Promise<LikeData> {
+    const likedMessage = await this.messageModel.findById(messageId);
+
+    if (!likedMessage) {
+      throw new Error('no such message');
+    }
+    likedMessage.likes.push(likeData);
+    await likedMessage.save();
+
+    return likeData;
+  }
+
   async getMessages(chatId: string, userId: string): Promise<MessageEntity[]> {
     const chat = await this.chatModel
       .findOne({
@@ -78,6 +91,7 @@ export class ChatRepository implements IChatRepository {
         path: 'messages',
         populate: {
           path: 'responses',
+          populate: { path: 'creatorId', model: 'User' },
           model: 'Message',
         },
       })

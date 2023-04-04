@@ -23,6 +23,8 @@ import { UserService } from 'src/modules/user/services/user.service';
 import { InviteToChatDto } from '../dto/invite-to-chat.dto';
 import { ChatWebsocketService } from '../services/chat-websocket.service';
 import { InviteUserDto } from '../dto/invite-user.dto';
+import { SendLikeDto } from '../dto/send-like.dto';
+import { MessageService } from 'src/modules/message/services/message.service';
 
 // TODO: add check auth token in handleConnection, move logic into service
 @WebSocketGateway(8080, { namespace: 'chat', cors: { origin: '*' } })
@@ -31,6 +33,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private chatWebsocketService: ChatWebsocketService,
     private chatService: ChatService,
     private userService: UserService,
+    private messageService: MessageService,
   ) {}
 
   @WebSocketServer() server: Server;
@@ -74,6 +77,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     try {
       await this.chatWebsocketService.sendMessage(addMessageDto, this.server);
+    } catch (error) {
+      return { event: ChatClientEvents.ERROR, data: error.message };
+    }
+  }
+
+  @SubscribeMessage(ChatServerEvents.SEND_LIKE)
+  async sendLike(
+    @MessageBody() sendLikeDto: SendLikeDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      console.log(sendLikeDto);
+      await this.chatWebsocketService.sendLike(sendLikeDto, this.server);
     } catch (error) {
       return { event: ChatClientEvents.ERROR, data: error.message };
     }

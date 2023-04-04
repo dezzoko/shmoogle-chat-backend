@@ -1,10 +1,11 @@
 import { FileEntity } from './file.entity';
+import { UserEntity } from './user.entity';
 
 export class MessageEntity {
   constructor(
     public id: string,
     public text: string,
-    public creatorId: string,
+    public creatorId: UserEntity,
     public chatId: string,
     public createdAt: Date,
     public hasModified: boolean,
@@ -33,11 +34,15 @@ export class MessageEntity {
         MessageEntity.fromObject(message),
       );
     }
+    let user;
+    if (object.creatorId.login) {
+      user = UserEntity.fromObject(object.creatorId);
+    }
 
     return new MessageEntity(
       object.id || object._id,
       object.text,
-      object.creatorId,
+      user || object.creatorId,
       object.chatId,
       object.createdAt || new Date(),
       object.hasModified || false,

@@ -9,6 +9,8 @@ import { CreateChatDto } from '../dto/create-chat.dto';
 import { InviteUserDto } from '../dto/invite-user.dto';
 import { UserService } from 'src/modules/user/services/user.service';
 import { JWT_SERVICE } from 'src/common/constants/tokens';
+import { SendLikeDto } from '../dto/send-like.dto';
+import { MessageService } from 'src/modules/message/services/message.service';
 
 // TODO: test multiple connections from one user
 export class ChatWebsocketService {
@@ -16,18 +18,20 @@ export class ChatWebsocketService {
     @Inject(JWT_SERVICE) private jwtService: JwtService,
     private chatService: ChatService,
     private userService: UserService,
+    private messageService: MessageService,
   ) {}
 
   users: Map<string, Socket> = new Map();
 
-  initializeUser(client: Socket, token: string) {
+  async initializeUser(client: Socket, token: string) {
     try {
       const payload: any = this.jwtService.decode(token);
+      //
 
       if (payload.refresh || !payload.userId) {
         throw new WsException('Invalid token');
       }
-
+      await this.userService.update({ statusId: 1 }, payload.userId);
       this.users.set(payload.userId, client);
     } catch (error) {
       throw new WsException('Invalid token');
@@ -65,6 +69,21 @@ export class ChatWebsocketService {
 
     //console.log('new message!', newMessage);
     server.to(chatId).emit(ChatClientEvents.NEW_MESSAGE, chatId, newMessage);
+  }
+
+  async sendLike(sendLikeDto: SendLikeDto, server: Server) {
+    const { userId, messageId, value, chatId } = sendLikeDto;
+    const client = this.users.get(userId);
+
+    if (!client) {
+      throw new WsException('Cannot find user with such id');
+    }
+    const chat = await this.chatService.get(chatId);
+    if (!chat || chat.users.find((user) => user.id === userId)) {
+      throw new WsException('No such chat or user is not member of such chat');
+    }
+    const likedMessage = this.chatService.sendLike(messageId, userId, value);
+    server.to(chatId).emit(ChatClientEvents.NEW_LIKE, chatId, likedMessage);
   }
 
   async createChat(createChatDto: CreateChatDto) {
@@ -105,9 +124,11 @@ export class ChatWebsocketService {
     }
   }
 
-  disconnectUser(client: Socket) {
+  async disconnectUser(client: Socket) {
     for (const key of this.users.keys()) {
       if (this.users.get(key).id !== client.id) continue;
+
+      this.userService.update({ statusId: 3 }, key);
       return this.users.delete(key);
     }
   }

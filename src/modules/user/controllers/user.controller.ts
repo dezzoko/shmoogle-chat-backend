@@ -67,8 +67,6 @@ export class UserController {
   @NoAuth()
   @Get(':id/avatar')
   async getAvatar(@Param('id') id: string): Promise<StreamableFile> {
-    console.log(typeof id);
-
     return this.userService.getAvatar(id);
   }
   @Get('')

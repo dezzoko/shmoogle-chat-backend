@@ -53,6 +53,10 @@ export class ChatService {
     return this.chatRepository.getMessages(chatId, userId);
   }
 
+  async sendLike(messageId: string, userId: string, value: string) {
+    return this.chatRepository.addLike(messageId, { userId, value });
+  }
+
   async addMessage(id: string, message: AddMessageDto) {
     const user = await this.userService.get(message.creatorId);
 

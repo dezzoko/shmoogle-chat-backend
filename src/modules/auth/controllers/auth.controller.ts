@@ -38,6 +38,10 @@ export class AuthController {
 
   @Post('/grantNewTokens')
   async grantNewTokens(@Body() grantNewTokensDto: GrantNewTokensDto) {
+    console.log(
+      this.authService.grantNewTokens(grantNewTokensDto.refreshToken),
+    );
+
     return await this.authService.grantNewTokens(
       grantNewTokensDto.refreshToken,
     );
