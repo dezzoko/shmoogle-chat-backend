@@ -82,7 +82,11 @@ export class ChatWebsocketService {
     if (!chat || chat.users.find((user) => user.id === userId)) {
       throw new WsException('No such chat or user is not member of such chat');
     }
-    const likedMessage = this.chatService.sendLike(messageId, userId, value);
+    const likedMessage = await this.chatService.sendLike(
+      messageId,
+      userId,
+      value,
+    );
     server.to(chatId).emit(ChatClientEvents.NEW_LIKE, chatId, likedMessage);
   }
 
