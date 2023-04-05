@@ -12,6 +12,7 @@ export class MessageEntity {
     public isResponseToId?: string,
     public responses?: MessageEntity,
     public files?: FileEntity[],
+    public likes?: { userId: string; value: string },
   ) {}
 
   static fromObject(object: any) {
@@ -49,6 +50,7 @@ export class MessageEntity {
       object.isResponseToId || null,
       responses || [],
       files || [],
+      object.likes || [],
     );
   }
 }

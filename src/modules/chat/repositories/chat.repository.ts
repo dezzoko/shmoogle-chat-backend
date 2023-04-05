@@ -53,8 +53,8 @@ export class ChatRepository implements IChatRepository {
     return ChatEntity.fromObject(chat);
   }
 
-  async addLike(messageId: string, likeData: LikeData): Promise<LikeData> {
-    const likedMessage = await this.messageModel.findById(messageId);
+  async addLike(likeData: LikeData): Promise<LikeData> {
+    const likedMessage = await this.messageModel.findById(likeData.messageId);
 
     if (!likedMessage) {
       throw new Error('no such message');
@@ -74,7 +74,7 @@ export class ChatRepository implements IChatRepository {
         },
       })
       .populate({
-        path: 'messages',
+        path: ' ',
         populate: {
           path: 'creatorId',
           model: 'User',
@@ -100,6 +100,7 @@ export class ChatRepository implements IChatRepository {
     if (!chat) {
       throw new Error('no such chat or user not a member of this chat');
     }
+
     const messages = chat.messages.map((m) => MessageEntity.fromObject(m));
 
     return messages;

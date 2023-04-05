@@ -54,7 +54,7 @@ export class ChatService {
   }
 
   async sendLike(messageId: string, userId: string, value: string) {
-    return this.chatRepository.addLike(messageId, { userId, value });
+    return this.chatRepository.addLike({ messageId, userId, value });
   }
 
   async addMessage(id: string, message: AddMessageDto) {
