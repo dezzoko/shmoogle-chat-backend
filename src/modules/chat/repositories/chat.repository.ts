@@ -74,7 +74,7 @@ export class ChatRepository implements IChatRepository {
         },
       })
       .populate({
-        path: ' ',
+        path: 'messages',
         populate: {
           path: 'creatorId',
           model: 'User',
@@ -105,6 +105,7 @@ export class ChatRepository implements IChatRepository {
 
     return messages;
   }
+  //
 
   async create(item: CreateChatData): Promise<ChatEntity> {
     try {
