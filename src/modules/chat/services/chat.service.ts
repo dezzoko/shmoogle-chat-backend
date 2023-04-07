@@ -57,6 +57,10 @@ export class ChatService {
     return this.chatRepository.addLike({ messageId, userId, value });
   }
 
+  async deleteLike(messageId: string, userId: string) {
+    return this.chatRepository.deleteLike({ messageId, userId });
+  }
+
   async addMessage(id: string, message: AddMessageDto) {
     const user = await this.userService.get(message.creatorId);
 

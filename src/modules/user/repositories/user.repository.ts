@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   BadRequestException,
+  NotFoundException,
   NotImplementedException,
 } from '@nestjs/common/exceptions';
 import { InjectModel } from '@nestjs/mongoose';
@@ -35,7 +36,7 @@ export class UserRepository implements IUserRepository {
       }
       return UserEntity.fromObject(user);
     } catch (error) {
-      throw new Error('Cannot find user');
+      throw new NotFoundException('Cannot find user');
     }
   }
 
@@ -65,7 +66,7 @@ export class UserRepository implements IUserRepository {
       return UserEntity.fromObject(registeredUser);
     } catch (error) {
       //console.log('cannot create user because', error.message);
-      throw new Error('Cannot create user');
+      throw new BadRequestException('Cannot create user');
     }
   }
 

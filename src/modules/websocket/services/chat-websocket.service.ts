@@ -11,6 +11,7 @@ import { UserService } from 'src/modules/user/services/user.service';
 import { JWT_SERVICE } from 'src/common/constants/tokens';
 import { SendLikeDto } from '../dto/send-like.dto';
 import { MessageService } from 'src/modules/message/services/message.service';
+import { DeleteLikeDto } from '../dto/delete-like-dto';
 
 // TODO: test multiple connections from one user
 export class ChatWebsocketService {
@@ -88,6 +89,22 @@ export class ChatWebsocketService {
       value,
     );
     server.to(chatId).emit(ChatClientEvents.NEW_LIKE, chatId, likedMessage);
+  }
+
+  async deleteLike(deleteLikeDto: DeleteLikeDto, server: Server) {
+    const { userId, messageId, chatId } = deleteLikeDto;
+    const client = this.users.get(userId);
+    if (!client) {
+      throw new WsException('Cannot find user with such id');
+    }
+    const chat = await this.chatService.get(chatId);
+    if (!chat || chat.users.find((user) => user.id === userId)) {
+      throw new WsException('No such chat or user is not member of such chat');
+    }
+    const unLikedMessage = await this.chatService.deleteLike(messageId, userId);
+    server
+      .to(chatId)
+      .emit(ChatClientEvents.DELETE_LIKE, chatId, unLikedMessage);
   }
 
   async createChat(createChatDto: CreateChatDto) {

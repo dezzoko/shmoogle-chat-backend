@@ -8,7 +8,8 @@ export interface IChatRepository extends IGenericRepository<ChatEntity> {
   addMessage(chatId: string, message: AddMessageData): Promise<MessageEntity>;
   addUserToChat(chatId: string, userId: string): Promise<ChatEntity>;
   getMessages(chatId: string, userId: string): Promise<MessageEntity[]>;
-  addLike(like: LikeData): Promise<LikeData>;
+  addLike(item: LikeData): Promise<LikeData>;
+  deleteLike(item: DeleteLikeData): Promise<DeleteLikeData>;
 }
 
 export interface AddMessageData {
@@ -29,4 +30,9 @@ export interface LikeData {
   messageId: string;
   userId: string;
   value: string;
+}
+
+export interface DeleteLikeData {
+  messageId: string;
+  userId: string;
 }

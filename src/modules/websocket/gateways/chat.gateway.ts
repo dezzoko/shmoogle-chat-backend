@@ -25,6 +25,7 @@ import { ChatWebsocketService } from '../services/chat-websocket.service';
 import { InviteUserDto } from '../dto/invite-user.dto';
 import { SendLikeDto } from '../dto/send-like.dto';
 import { MessageService } from 'src/modules/message/services/message.service';
+import { DeleteLikeDto } from '../dto/delete-like-dto';
 
 // TODO: add check auth token in handleConnection, move logic into service
 @WebSocketGateway(8080, { namespace: 'chat', cors: { origin: '*' } })
@@ -88,8 +89,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      console.log(sendLikeDto);
       await this.chatWebsocketService.sendLike(sendLikeDto, this.server);
+    } catch (error) {
+      return { event: ChatClientEvents.ERROR, data: error.message };
+    }
+  }
+
+  @SubscribeMessage(ChatServerEvents.DELETE_LIKE)
+  async DeleteLikeDto(
+    @MessageBody() deleteLikeDto: DeleteLikeDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      await this.chatWebsocketService.deleteLike(deleteLikeDto, this.server);
     } catch (error) {
       return { event: ChatClientEvents.ERROR, data: error.message };
     }

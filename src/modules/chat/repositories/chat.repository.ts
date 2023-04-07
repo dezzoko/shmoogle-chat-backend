@@ -7,6 +7,7 @@ import { MessageEntity } from 'src/core/entities/message.entity';
 import {
   AddMessageData,
   CreateChatData,
+  DeleteLikeData,
   IChatRepository,
   LikeData,
 } from 'src/core/interfaces/chat-repository.interface';
@@ -63,6 +64,22 @@ export class ChatRepository implements IChatRepository {
     await likedMessage.save();
 
     return likeData;
+  }
+
+  async deleteLike(deleteLikeData: DeleteLikeData): Promise<DeleteLikeData> {
+    const unLikedMessage = await this.messageModel.findById(
+      deleteLikeData.messageId,
+    );
+    if (!unLikedMessage) throw new Error('no such message');
+    if (!unLikedMessage.likes) throw new Error('this message have no likes');
+    const likeIndex = unLikedMessage.likes.findIndex(
+      (like: { userId: string; value: string }) =>
+        like.userId === deleteLikeData.userId,
+    );
+    if (likeIndex === -1) throw new Error('no such like');
+    unLikedMessage.likes.splice(likeIndex);
+    unLikedMessage.save();
+    return deleteLikeData;
   }
 
   async getMessages(chatId: string, userId: string): Promise<MessageEntity[]> {
@@ -206,7 +223,7 @@ export class ChatRepository implements IChatRepository {
       throw new Error('no such chat');
     }
 
-    const updatedChat = await chat
+    await chat
       .updateOne({
         $push: {
           users: user._id,
@@ -214,7 +231,9 @@ export class ChatRepository implements IChatRepository {
       })
       .exec();
 
-    return ChatEntity.fromObject(updatedChat);
+    chat.users.push(user);
+
+    return ChatEntity.fromObject(chat);
   }
 
   async update(
